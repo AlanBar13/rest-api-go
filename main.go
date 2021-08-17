@@ -37,11 +37,25 @@ func addTodo(c *gin.Context) {
 	c.JSON(http.StatusCreated, newTodo)
 }
 
+func getTodoByID(c *gin.Context) {
+	id := c.Param("id")
+
+	for _, t := range todos {
+		if t.ID == id {
+			c.IndentedJSON(http.StatusOK, t)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+}
+
 func main() {
 	router := gin.Default()
 
 	router.GET("/todos", getTodos)
 	router.POST("/todos", addTodo)
+	router.GET("/todos/:id", getTodoByID)
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Welcome to REST API",
