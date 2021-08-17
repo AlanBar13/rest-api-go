@@ -15,6 +15,13 @@ type todo struct {
 	Due         string `json:"Due"`
 }
 
+type updateTodoInput struct {
+	Title       string `json:"Title"`
+	Description string `json:"Description"`
+	Completed   bool   `json:"Completed"`
+	Due         string `json:"Due"`
+}
+
 var todos = []todo{
 	{ID: "1", Title: "Buy groceries", Description: "Buy ketchup, and Meat", Completed: false, Due: time.Now().String()},
 	{ID: "2", Title: "Go get a Haircut", Description: "Haircut price $20", Completed: false, Due: time.Now().String()},
@@ -50,12 +57,43 @@ func getTodoByID(c *gin.Context) {
 	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 }
 
+func updateTodo(c *gin.Context) {
+	id := c.Param("id")
+	var updatedTodo updateTodoInput
+
+	if err := c.ShouldBindJSON(&updatedTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if updatedTodo.Title == "" || updatedTodo.Description == "" || updatedTodo.Due == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Title, Description and Due cannot be empty"})
+		return
+	}
+
+	for i, t := range todos {
+		if t.ID == id {
+			todos[i].Title = updatedTodo.Title
+			todos[i].Description = updatedTodo.Description
+			todos[i].Completed = updatedTodo.Completed
+			todos[i].Due = updatedTodo.Due
+
+			c.IndentedJSON(http.StatusOK, todos[i])
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+}
+
 func main() {
 	router := gin.Default()
 
 	router.GET("/todos", getTodos)
 	router.POST("/todos", addTodo)
 	router.GET("/todos/:id", getTodoByID)
+	router.PUT("/todos/:id", updateTodo)
+
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Welcome to REST API",
