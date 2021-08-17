@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -86,6 +87,21 @@ func updateTodo(c *gin.Context) {
 	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 }
 
+func removeTodo(c *gin.Context) {
+	id := c.Param("id")
+
+	for i, t := range todos {
+		if t.ID == id {
+			todos = append(todos[:i], todos[i+1:]...)
+			res := fmt.Sprintf("Todo deleted with id: %s", id)
+			c.IndentedJSON(http.StatusOK, gin.H{"error": res})
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+}
+
 func main() {
 	router := gin.Default()
 
@@ -93,6 +109,7 @@ func main() {
 	router.POST("/todos", addTodo)
 	router.GET("/todos/:id", getTodoByID)
 	router.PUT("/todos/:id", updateTodo)
+	router.DELETE("/todos/:id", removeTodo)
 
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
